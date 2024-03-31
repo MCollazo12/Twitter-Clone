@@ -40,6 +40,11 @@
 
     <div class="col-lg-6 col-md-8 col-sm-12">
       <ul class="list-group" id="messages">
+        {% if messages == [] %}
+          <li class="list-group-item">
+            <p class="text-muted">Get started by following a user or creating a new post!</p>
+          </li>
+        {% endif %}
         {% for msg in messages %}
           <li class="list-group-item">
             <a href="/messages/{{ msg.id  }}" class="message-link"/>
