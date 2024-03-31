@@ -29,9 +29,13 @@ connect_db(app)
 ##############################################################################
 # User signup/login/logout
 
+# Function defined with the .before_request() decorator will execute before every request is made
 @app.before_request
 def add_user_to_g():
-    """If we're logged in, add curr user to Flask global."""
+    """If user is logged in, add curr user to Flask's global 'g' object.
+    This allows us to access curr user in any view function within the app.
+    
+    """
 
     if CURR_USER_KEY in session:
         g.user = User.query.get(session[CURR_USER_KEY])
@@ -91,7 +95,14 @@ def signup():
 
 @app.route('/login', methods=["GET", "POST"])
 def login():
-    """Handle user login."""
+    """Handle user login.
+
+    This function handles the login page of the app. If a user
+    submits the login form, it authenticates the user's credentials
+    and logs them in if successful. If not, it displays an error
+    message.
+
+    """
 
     form = LoginForm()
 
