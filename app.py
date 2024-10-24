@@ -1,7 +1,7 @@
- 
 import os
 from flask import Flask, render_template, request, flash, redirect, session, g
-#from flask_debugtoolbar import DebugToolbarExtension
+
+# from flask_debugtoolbar import DebugToolbarExtension
 from sqlalchemy.exc import IntegrityError
 
 from forms import UserAddForm, LoginForm, MessageForm, UserEditForm
@@ -14,14 +14,15 @@ app = Flask(__name__)
 
 # Get DB_URI from environ variable (useful for production/testing) or,
 # if not set there, use development local db.
-app.config['SQLALCHEMY_DATABASE_URI'] = (
-    os.environ.get('DATABASE_URL', 'postgresql:///warbler'))
+app.config["SQLALCHEMY_DATABASE_URI"] = os.environ.get(
+    "DATABASE_URL", "postgresql:///warbler"
+)
 
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-app.config['SQLALCHEMY_ECHO'] = False
-app.config['DEBUG_TB_INTERCEPT_REDIRECTS'] = True
-app.config['SECRET_KEY'] = os.environ.get('SECRET_KEY', "it's a secret")
-#toolbar = DebugToolbarExtension(app)
+app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SQLALCHEMY_ECHO"] = False
+app.config["DEBUG_TB_INTERCEPT_REDIRECTS"] = True
+app.config["SECRET_KEY"] = os.environ.get("SECRET_KEY", "it's a secret")
+# toolbar = DebugToolbarExtension(app)
 
 connect_db(app)
 
@@ -29,12 +30,13 @@ connect_db(app)
 ##############################################################################
 # User signup/login/logout
 
+
 # Function defined with the .before_request() decorator will execute before every request is made
 @app.before_request
 def add_user_to_g():
     """If user is logged in, add curr user to Flask's global 'g' object.
     This allows us to access curr user in any view function within the app.
-    
+
     """
 
     if CURR_USER_KEY in session:
@@ -57,7 +59,7 @@ def do_logout():
         del session[CURR_USER_KEY]
 
 
-@app.route('/signup', methods=["GET", "POST"])
+@app.route("/signup", methods=["GET", "POST"])
 def signup():
     """Handle user signup.
 
@@ -68,9 +70,9 @@ def signup():
     If the there already is a user with that username: flash message
     and re-present form.
     """
-    
+
     form = UserAddForm()
-    
+
     if form.validate_on_submit():
         try:
             user = User.signup(
@@ -82,18 +84,18 @@ def signup():
             db.session.commit()
 
         except IntegrityError:
-            flash("Username already taken", 'danger')
-            return render_template('users/signup.html', form=form)
+            flash("Username already taken", "danger")
+            return render_template("users/signup.html", form=form)
 
         do_login(user)
 
         return redirect("/")
 
     else:
-        return render_template('users/signup.html', form=form)
+        return render_template("users/signup.html", form=form)
 
 
-@app.route('/login', methods=["GET", "POST"])
+@app.route("/login", methods=["GET", "POST"])
 def login():
     """Handle user login.
 
@@ -107,20 +109,19 @@ def login():
     form = LoginForm()
 
     if form.validate_on_submit():
-        user = User.authenticate(form.username.data,
-                                 form.password.data)
+        user = User.authenticate(form.username.data, form.password.data)
 
         if user:
             do_login(user)
             flash(f"Hello, {user.username}!", "success")
             return redirect("/")
 
-        flash("Invalid credentials.", 'danger')
+        flash("Invalid credentials.", "danger")
 
-    return render_template('users/login.html', form=form)
+    return render_template("users/login.html", form=form)
 
 
-@app.route('/logout')
+@app.route("/logout")
 def logout():
     """Handle logout of user."""
 
@@ -132,28 +133,26 @@ def logout():
     return redirect("/")
 
 
-
 ##############################################################################
 # General user routes:
-
-@app.route('/users')
+@app.route("/users")
 def list_users():
     """Page with listing of users.
 
     Can take a 'q' param in querystring to search by that username.
     """
 
-    search = request.args.get('q')
+    search = request.args.get("q")
 
     if not search:
         users = User.query.all()
     else:
         users = User.query.filter(User.username.like(f"%{search}%")).all()
 
-    return render_template('users/index.html', users=users)
+    return render_template("users/index.html", users=users)
 
 
-@app.route('/users/<int:user_id>')
+@app.route("/users/<int:user_id>")
 def users_show(user_id):
     """Show user profile."""
 
@@ -161,16 +160,16 @@ def users_show(user_id):
 
     # snagging messages in order from the database;
     # user.messages won't be in order by default
-    messages = (Message
-                .query
-                .filter(Message.user_id == user_id)
-                .order_by(Message.timestamp.desc())
-                .limit(100)
-                .all())
-    return render_template('users/show.html', user=user, messages=messages)
+    messages = (
+        Message.query.filter(Message.user_id == user_id)
+        .order_by(Message.timestamp.desc())
+        .limit(100)
+        .all()
+    )
+    return render_template("users/show.html", user=user, messages=messages)
 
 
-@app.route('/users/<int:user_id>/following')
+@app.route("/users/<int:user_id>/following")
 def show_following(user_id):
     """Show list of people this user is following."""
 
@@ -179,10 +178,10 @@ def show_following(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/following.html', user=user)
+    return render_template("users/following.html", user=user)
 
 
-@app.route('/users/<int:user_id>/followers')
+@app.route("/users/<int:user_id>/followers")
 def users_followers(user_id):
     """Show list of followers of this user."""
 
@@ -191,10 +190,10 @@ def users_followers(user_id):
         return redirect("/")
 
     user = User.query.get_or_404(user_id)
-    return render_template('users/followers.html', user=user)
+    return render_template("users/followers.html", user=user)
 
 
-@app.route('/users/follow/<int:follow_id>', methods=['POST'])
+@app.route("/users/follow/<int:follow_id>", methods=["POST"])
 def add_follow(follow_id):
     """Add a follow for the currently-logged-in user."""
 
@@ -209,7 +208,7 @@ def add_follow(follow_id):
     return redirect(f"/users/{g.user.id}/following")
 
 
-@app.route('/users/stop-following/<int:follow_id>', methods=['POST'])
+@app.route("/users/stop-following/<int:follow_id>", methods=["POST"])
 def stop_following(follow_id):
     """Have currently-logged-in-user stop following this user."""
 
@@ -224,17 +223,17 @@ def stop_following(follow_id):
     return redirect(f"/users/{g.user.id}/following")
 
 
-#Step Five: Profile Edit
-@app.route('/users/profile', methods=["GET", "POST"])
+# Step Five: Profile Edit
+@app.route("/users/profile", methods=["GET", "POST"])
 def profile():
     """Update profile for current user."""
 
     if not g.user:
-        flash('Access unauthorized.', 'danger')
-        return redirect('/')
-    
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
     form = UserEditForm(obj=g.user)
-    
+
     if form.validate_on_submit():
         if User.authenticate(g.user.username, form.password.data):
             g.user.username = form.username.data
@@ -242,16 +241,17 @@ def profile():
             g.user.image_url = form.image_url.data
             g.user.header_image_url = form.header_image_url.data
             g.user.bio = form.bio.data
-            
+
             db.session.commit()
-            return redirect(f'/users/{g.user.id}')
-    
-    flash('Invalid password.', 'danger')
-    
-    return render_template('users/edit.html', form=form)
+            return redirect(f"/users/{g.user.id}")
+
+        else:
+            flash("Invalid password. Please try again.", "danger")
+
+    return render_template("users/edit.html", form=form)
 
 
-@app.route('/users/delete', methods=["POST"])
+@app.route("/users/delete", methods=["POST"])
 def delete_user():
     """Delete user."""
 
@@ -269,8 +269,7 @@ def delete_user():
 
 ##############################################################################
 # Messages routes:
-
-@app.route('/messages/new', methods=["GET", "POST"])
+@app.route("/messages/new", methods=["GET", "POST"])
 def messages_add():
     """Add a message:
 
@@ -290,18 +289,18 @@ def messages_add():
 
         return redirect(f"/users/{g.user.id}")
 
-    return render_template('messages/new.html', form=form)
+    return render_template("messages/new.html", form=form)
 
 
-@app.route('/messages/<int:message_id>', methods=["GET"])
+@app.route("/messages/<int:message_id>", methods=["GET"])
 def messages_show(message_id):
     """Show a message."""
 
     msg = Message.query.get(message_id)
-    return render_template('messages/show.html', message=msg)
+    return render_template("messages/show.html", message=msg)
 
 
-@app.route('/messages/<int:message_id>/delete', methods=["POST"])
+@app.route("/messages/<int:message_id>/delete", methods=["POST"])
 def messages_destroy(message_id):
     """Delete a message."""
 
@@ -317,31 +316,72 @@ def messages_destroy(message_id):
 
 
 ##############################################################################
-# Homepage and error pages
+# Liked Messages Routes
+@app.route("/users/<int:user_id>/likes")
+def show_likes(user_id):
+    """Show a list of messages that this user likes."""
 
-@app.route('/')
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    user = User.query.get_or_404(user_id)
+    return render_template("users/likes.html", user=user, likes=user.likes)
+
+
+@app.route("/messages/<int:msg_id>/like", methods=["POST"])
+def toggle_like(msg_id):
+    """Add a like for the currently-logged-in user."""
+
+    if not g.user:
+        flash("Access unauthorized.", "danger")
+        return redirect("/")
+
+    liked_msg = Message.query.get_or_404(msg_id)
+
+    if liked_msg.user_id == g.user.id:
+        flash("You cannot like your own message.", "danger")
+        return redirect("/")
+
+    # Check to see if the message is already liked by the user
+    if liked_msg in g.user.likes:
+        # If it is, remove that like by creating a new list that excludes the liked_message
+        g.user.likes.remove(liked_msg)
+    else:
+        # If it's not already liked, add the like to the user's list of likes
+        g.user.likes.append(liked_msg)
+
+    db.session.commit()
+    return redirect("/")
+
+##############################################################################
+# Homepage and error pages
+@app.route("/")
 def homepage():
     """Show homepage:
 
     - anon users: no messages
     - logged in: 100 most recent messages of followed_users
     """
-    
-    
+
     if g.user:
-        followed_users = [followed_user.id for followed_user in g.user.following] + [g.user.id]
+        followed_users = [followed_user.id for followed_user in g.user.following] + [
+            g.user.id
+        ]
+
+        messages = (
+            Message.query.filter(Message.user_id.in_(followed_users))
+            .order_by(Message.timestamp.desc())
+            .limit(100)
+            .all()
+        )
         
-        messages = (Message
-                    .query
-                    .filter(Message.user_id.in_(followed_users))
-                    .order_by(Message.timestamp.desc())
-                    .limit(100)
-                    .all())
-        return render_template('home.html', messages=messages)
+        liked_messages = [msg.id for msg in g.user.likes]
+        
+        return render_template("home.html", messages=messages, likes=liked_messages)
 
     else:
-        return render_template('home-anon.html')
-
+        return render_template("home-anon.html")
 
 
 ##############################################################################
@@ -351,6 +391,7 @@ def homepage():
 #
 # https://stackoverflow.com/questions/34066804/disabling-caching-in-flask
 
+
 @app.after_request
 def add_header(req):
     """Add non-caching headers on every request."""
@@ -358,5 +399,5 @@ def add_header(req):
     req.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     req.headers["Pragma"] = "no-cache"
     req.headers["Expires"] = "0"
-    req.headers['Cache-Control'] = 'public, max-age=0'
+    req.headers["Cache-Control"] = "public, max-age=0"
     return req

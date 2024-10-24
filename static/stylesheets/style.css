@@ -268,6 +268,11 @@ nav + .container {
   z-index: 1;
 }
 
+.messages-like button {
+  position: relative;
+  z-index: 2; /* Higher than 'message-link' to ensure it's clickable */
+}
+
 #messages .list-group-item a:not(.message-link) {
   position: relative;
   z-index: 2;
